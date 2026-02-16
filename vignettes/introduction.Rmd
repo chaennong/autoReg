@@ -19,7 +19,8 @@ library(autoReg)
 ```
 
 # check_data
-This function checks if the response variable is binary or continuous. Ifthe  response variable is categorical (factor or character with two levels), it changes the response variable into binary(0 or 1). This function returns two outputs: one is the feature of the response variable(binary or continuous), and the other is a binary(0 or 1) or continuous response variable
+The check_data() function checks if the response variable is binary or continuous. If the  response variable is categorical (factor or character with two levels), it changes the response variable into binary(0 or 1).
+**Example: Binary Data**
 ```{r}
 check_data(bin.x,bin.y)
 check_data(bin.x,bin.y)$response_type
@@ -29,19 +30,27 @@ check_data(cont.x,cont.y)
 check_data(cont.x,cont.y)$response_type
 check_data(cont.x,cont.y)$y
 ```
+**Output**
+- response_type: Type of response variable y (binary or continuous)
+- y: finalized response value of y
 
 # train_test(X,y,p) 
-This function generates train and test data for machine learning. In addition to matrix X and vector y, the user is required to determine p, which is the proportion of train data. If p is not given, it splits the train and test data by a proportion of 0.8. It returns train_X,train_y,test_X, and test_y.
-
+The train_test() function generates train and test data for machine learning. In addition to matrix X and vector y, the user is required to determine p, which is the proportion of the training data. If p is not given, it splits the train and test data by a proportion of 0.8. 
+**Example**
 ```{r}
 traintest <- train_test(bin.x,bin.y,p=0.8)
 nrow(traintest$train_X)
 nrow(traintest$test_X)
 ```
+**Output**
+- train_X: A matrix of predictor variables in train data
+- train_y: A vector of response variable in train data
+- test_X: A matrix of predictor variables in test data
+- test_y: A matrix of response variable in test data
 
 # prescreeing(X,y,K)
-This function performs pre-screening on the predictor variable, evaluating which predictor variable is most informative based on the absolute value of correlation to the response variable. In addition to matrix X and vector y, users are required to determine K, the number of informative predictors. It returns the names of the K most informative predictors. 
-
+The prescreening() function performs pre-screening on the predictor variable, evaluating which predictor variable is most informative based on the absolute value of correlation to the response variable. In addition to matrix X and vector y, users are required to determine K, the number of informative predictors. K is set to 5 by default. It returns the names of the K most informative predictors. 
+**Example**
 ```{r}
 prescreening(bin.x,bin.y,K=5)
 ```
@@ -57,36 +66,42 @@ Fitting different types of models is a fundamental task in data analysis and mac
 
 #1.Linear model
 fitLinearModel() function allows users to fit a linear model. It only accepts a continuous y vector.
+**Example**
 ```{r}
 linear_model <- fitLinearModel(cont.x,cont.y)
 ```
 
 #2. Logistic model
 fitLogisticModel() function allows users to fit a logistic model. It only accepts a binary y vector.
+**Example**
 ```{r}
 logistic_model <- fitLogisticModel(bin.x,bin.y)
 ```
 
 #3. Ridge model
 fitRidgeModel() function allows users to fit a ridge regularization model. It accepts both binary and continuous y vectors. 
+**Example**
 ```{r}
 ridge_model <- fitRidgeModel(bin.x,bin.y)
 ```
 
 #4. LASSO model
 fitLassoModel() function allows users to fit an LASSO regularization model. It accepts both binary and continuous y vectors.
+**Example**
 ```{r}
 lasso_model <- fitLassoModel(cont.x,cont.y)
 ```
 
 #5. Elastic net model
 fitElasticNetmodel() function allows users to fit an elastic net regularization model. It accepts both binary and continuous y vectors.
+**Example**
 ```{r}
 elasticnet_model <- fitElasticNetModel(bin.x,bin.y)
 ```
 
 #6. Random forest model
 fitRandomForestModel() function allows users to fit a random forest model. It accepts both binary and continuous y vector. ntree, which refers to the number of trees in the random forest model, is set to 500 as the default. Users can alter the number of trees by specifying a parameter 'ntree'.
+**Example**
 ```{r}
 randomforest_model <- fitRandomForestModel(cont.x,cont.y,ntree=500)
 ```
@@ -111,3 +126,39 @@ baggingPrediction(bin.x,bin.y)
 ```{r}
 baggingPrediction(cont.x,cont.y)
 ```
+
+# Ensemble Learning
+The ensemblelearning() function performs interactive ensemble learning by allowing users to select and fit multiple models sequentially, and then aggregates their predictions by averaging. 
+This function supports both binary and continuous response variables and automatically evaluates model performance based on the response type. 
+
+**Example: Binary Response**
+
+```{r}
+ensemblelearning(bin.x, bin.y)
+```
+
+During execution, users will be prompted to select models interactively:
+```{r}
+Choose model.
+  1. for logistic,
+  2. for linear,
+  3. for ridge,
+  4. for lasso,
+  5. for elastic net,
+  6. for random forest,
+  7. to exit. 
+```{r}
+
+**Output:**
+- Confusion matrix comparing final predictions and true test labels
+- Overall classification accuracy
+
+**Example: Continuous Response**
+
+```{r}
+ensemblelearning(cont.x, cont.y)
+```
+
+**Output:**
+- Root Mean Square Error (RMSE) between final predictions and test responses
+
