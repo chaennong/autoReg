@@ -1,0 +1,10 @@
+Package: simpleEnsembleGroup19
+Title: Simple Ensemble Learning
+Version: 0.0.0.9000
+Authors@R: 
+    person("Chaeeun", "Shin", , "chaeeun.shin@stonybrook.edu", role = c("aut", "cre"))
+Description: This package performs fitting single regression model, bootstrap bagging model, and ensemble learning model. It performs prediction of testing data and check accuracy or RMSE. 
+License: 
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
