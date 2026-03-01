@@ -28,8 +28,8 @@ result <- check_data(X = bin.x, y = bin.y)
 result$response_type
 nrow(result$y)
 ```
-**Output**
 
+**Output**
 - `response_type`: Type of response variable y (`"binary"` or `"continuous"`)
 - `y`: finalized response value of y in vector
 
@@ -61,19 +61,12 @@ prescreening(X = bin.x, y = bin.y,K = 5)
 ```
 
 **Output**  
-
 - Names of the K most informative predictors
 
 
 
 # 2. Fitting model
 Fitting different types of models is a fundamental task in data analysis and machine learning. This package provides a rich ecosystem of packages for fitting various types of modes. This tutorial covers how to fit the following models using built-in datasets in the package.  
-
-1. Linear model
-2. Logistic model
-3. Ridge model
-4. LASSO model
-5. Elastic net model
 
 
 ## 2-1.Standard regression model
@@ -300,6 +293,3 @@ Users can enter an integer between 1 and 4 to select regression model. This func
 - `model_summary`: Table for count of regression model used in ensemble learning process 
 - `RMSE`: Root Mean Square Error (RMSE) between final predictions and test responses
 - `r-squared`: R-squared, also known as coefficient of determination
-
-
-
