@@ -63,7 +63,7 @@ ensembleLearning(bin.x, bin.y, p = 0.8)
 | **Pre-Screening** | `check_data`, `train_test`, `prescreening` | 
 | **Model Fitting** | `fitStandard`, `fitRidge`, `fitLasso`, `fitElasticNet` | 
 | **Evaluation** | `evaluateModel`, `evaluateBagging` |
-| **Bagging** | `baggingStandard`, `bagginRidge`, `baggingLasso`, `baggingElasticNet` |
+| **Bagging** | `baggingStandard`, `baggingRidge`, `baggingLasso`, `baggingElasticNet` |
 | **Ensemble** | `ensembleLearning` |
 
 # Author
