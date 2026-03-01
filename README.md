@@ -59,7 +59,7 @@ ensembleLearning(bin.x, bin.y, p = 0.8)
 
 # Available Functions
 | Category | Functions |
-| :--- | :--- | :--- |
+| :--- | :--- |
 | **Pre-Screening** | `check_data`, `train_test`, `prescreening` | 
 | **Model Fitting** | `fitStandard`, `fitRidge`, `fitLasso`, `fitElasticNet` | 
 | **Evaluation** | `evaluateModel`, `evaluateBagging` |
