@@ -1,14 +1,19 @@
-#' This function predicts the outcome of test data in ensemble learning of models including linear, logistic, ridge, lasso, elastic net, and random forest.
-#' On every iteration, this function provides the selection of models to perform. Users can stop fitting models by input 7. 
+#' This function is to evaluate performance of ensemble learning models including standard regression(linear, logistic) and regularized regression(ridge, LASSO, elastic net) processes. 
+#' On every iteration, this function provides the selection of models to perform. Users can stop fitting models by input 6. 
 #' @param X A matrix of predictor variables
 #' @param y A vector of response variable
 #' @param p A proportion of train data. Default is 0.8
 #' @return If y is binary, it returns a list of
-#'          1. confusion.matrix: confusion matrix between final predictions and actual value of test data.
-#'          2. accuracy: overall accuracy based on confusion matrix
-#'         If y is continuous, it returns a RMSE value between final predictions and actual value of test data.
+#'          1. model_summary: Count of model used in ensemble learning process 
+#'          2. confusion.matrix: confusion matrix between final predictions and actual value of test data.\
+#'          3. accuracy: overall accuracy based on confusion matrix
+#'         If y is continuous, it returns a list of
+#'          1. model_summary: Count of model used in ensemble learning process
+#'          2. RMSE: RMSE(Root Mean Square Error) between predicted data and test data
+#'          3. r_squared: R-squared, also known as coefficient of determination
 #' @export
 ensembleLearning <- function(X,y,p=0.8) {
+  p <- as.numeric(p)
   if (p<=0 || p>=1 || is.na(p)==TRUE)
     stop("Invalid input for p. p must be decimal between 0 and 1")
   result <- check_data(X,y)
@@ -17,69 +22,68 @@ ensembleLearning <- function(X,y,p=0.8) {
   train_y <- traintest$train_y
   test_X <- traintest$test_X
   test_y <- traintest$test_y
+  model_names <- character()
   model <- list()
   model_coef <- list()
   predictions <- list()
   i <- 1
   repeat {
-    input <- readline(prompt="Choose model.\n 1 for logistic,\n 2 for linear,\n 3 or ridge,\n 4 for lasso,\n 5 for elastic net,\n 6 for random forest, \n 7 to exit. ")
+    input <- readline(prompt="Choose model.
+                      1 for standard regression,
+                      2 for ridge, 
+                      3 or LASSO, 
+                      4 for elastic net, 
+                      5 to exit.\n")
+    input <- as.numeric(input)
+    if (is.na(input) || input < 1 || input > 5)
+      stop("Invalid model selection. Input must be an integer between 1 and 5.")
     if (input == 1) {
-      if(result$response_type =="binary") {
-        model[[i]] <- fitLogisticModel(X,y)
-        model_coef[[i]] <- coef(model[[i]])
-        predictions[[i]] <- cbind(1,test_X) %*% model_coef[[i]]
-        i <- i+1
-      }
-      else if(result$response_type =="continuous")
-        stop("Response variable must be binary, not continuous")
+      model[[i]] <- fitStandard(train_X, train_y)
+      predictions[[i]] <- predict(model[[i]], newx = test_X)
+      i <- i+1
+      if (result$response_type == "binary") 
+        model_names <- c(model_names, "Logistic")
+      else
+        model_names <- c(model_names, "Linear")
     }
     if (input == 2) {
-      if(result$response_type =="binary")
-        stop("Response variable must be continuous, not binary")
-      else if(result$response_type =="continuous") {
-        model[[i]] <- fitLinearModel(X,y)
-        model_coef[[i]] <- coef(model[[i]])
-        predictions[[i]] <- cbind(1,test_X) %*% model_coef[[i]]
-        i <- i+1
-      }
+      model[[i]] <- fitRidge(train_X, train_y)
+      predictions[[i]] <- predict(model[[i]], newx = test_X)
+      i <- i+1
+      model_names <- c(model_names, "Ridge")
     }
-    if (input == 3) {
-      model[[i]] <- fitRidgeModel(X,y)
+    if(input == 3) {
+      model[[i]] <- fitLasso(train_X, train_y)
       predictions[[i]] <- predict(model[[i]],newx=test_X)
       i <- i+1
+      model_names <- c(model_names, "LASSO")
     }
     if(input == 4) {
-      model[[i]] <- fitLassoModel(X,y)
-      model_coef[[i]] <- coef(model[[i]])
+      model[[i]] <- fitElasticNet(train_X, train_y)
       predictions[[i]] <- predict(model[[i]],newx=test_X)
       i <- i+1
+      model_names <- c(model_names, "Elastic Net")
     }
-    if(input == 5) {
-      model[[i]] <- fitElasticNetModel(X,y)
-      model_coef[[i]] <- coef(model[[i]])
-      predictions[[i]] <- predict(model[[i]],newx=test_X)
-      i <- i+1
-    }
-    if(input == 6) {
-      model[[i]] <- fitRandomForestModel(X,y)
-      predictions[[i]] <- predict(model[[i]],newx=test_X)
-      i <- i+1
-    }
-    if(input==7)
+    if(input==5)
       break
-    if(input<=1 || input>=8 || is.na(input)==TRUE)
-      stop("Invalid model selection")
   }
-  final_predictions <- rowMeans(do.call(cbind,predictions))
+  predicted_y <- rowMeans(do.call(cbind,predictions))
   if(result$response_type=="binary") {
-     final_predictions <- ifelse(final_predictions>0.5,1,0)
-     confusionMatrix <- table(final_predictions,test_y)
+     predicted_y <- ifelse(predicted_y>0.5,1,0)
+     confusionMatrix <- table(predicted_y,test_y)
      accuracy <- (confusionMatrix[1,1]+confusionMatrix[2,2])/(confusionMatrix[1,1]+confusionMatrix[1,2]+confusionMatrix[2,1]+confusionMatrix[2,2])
-     return(list(confusion.matrix=confusionMatrix, accuracy=accuracy))
+     return(list(model_summary = table(model_names),
+                 confusion.matrix=confusionMatrix,
+                 accuracy=accuracy))
   }
   if(result$response_type=="continuous") {
-    RMSE <- sqrt(mean(test_y-final_predictions)^2)
-    return(RMSE)
+    sse <- sum((predicted_y - test_y)^2)
+    sst <- sum((test_y - mean(test_y))^2)
+    r_squared <- 1 - (sse/sst)
+    RMSE <- sqrt(mean(test_y - predicted_y)^2)
+    return(list(model_summary = table(model_names),
+                RMSE=RMSE,
+                r_squared = r_squared))
   }
 }
 

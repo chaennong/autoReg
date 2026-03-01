@@ -1,53 +1,39 @@
-#' This function fit linear model.
+#' This function fits standard regression model.
 #' @param X A matrix of predictor variables
 #' @param y A vector of response variable
-#' @return fitted linear model
+#' @retrun Fitted standard regression model
 #' @export
-fitLinearModel <- function(X,y){
+fitStandard <- function(X,y) {
   result <- check_data(X,y)
-  if(result$response_type =="binary"){
-    stop("Response variable type should be continuous for Linear Regression")
-  }else{
+  if(result$response_type == "binary") {
+    model <- glm(result$y~X, family = "binomial")
+  } else {
     model <- lm(result$y~X)
   }
   return(model)
 }
 
-#' This function fit logistic model.
+#' This function fits ridge regression model.
 #' @param X A matrix of predictor variables
 #' @param y A vector of response variable
-#' @return Fitted logistic model
-#' @export
-fitLogisticModel <- function(X,y){
-  result <- check_data(X,y)
-  if(result$response_type =="continuous"){
-    stop("Response variable type should be binary for Logistic Regression")
-  }else{
-    model <- glm(result$y~X, family = "binomial")
-  }
-  return(model)
-}
-
-#' This function fit ridge model.
-#' @param X A matrix of predictor variables
-#' @param y A vector of response variable
-#' @return Fitted ridge model
+#' @return Fitted ridge regression model
 #' @import glmnet
 #' @export
-fitRidgeModel <- function(X,y){
+fitRidge <- function(X,y){
+  require("glmnet")
   result <- check_data(X,y)
   cv <- glmnet::cv.glmnet(X, result$y , alpha = 0)
   model <- glmnet::glmnet(X, result$y, alpha = 0, lambda = cv$lambda.min)
   return(model)
 }
 
-#' This function fit lasso model.
+#' This function fits LASSO regression model.
 #' @param X A matrix of predictor variables
 #' @param y A vector of response variable
-#' @return Fitted lasso model 
+#' @return Fitted LASSO regression model 
 #' @import glmnet
 #' @export
-fitLassoModel <- function(X,y){
+fitLasso <- function(X,y) {
   require("glmnet")
   result <- check_data(X,y)
   cv <- glmnet::cv.glmnet(X, result$y, alpha = 1)
@@ -55,13 +41,13 @@ fitLassoModel <- function(X,y){
   return(model)
 }
 
-#' This function fit elastic net model.
+#' This function fits elastic net model.
 #' @param X A matrix of predictor variables
 #' @param y A vector of response variable
 #' @return Fitted elastic net model
 #' @import glmnet
 #' @export
-fitElasticNetModel <- function(X,y){
+fitElasticNet <- function(X,y){
   require("glmnet")
   result <- check_data(X,y)
   cv <- glmnet::cv.glmnet(X, result$y, alpha = 0.5)
@@ -69,34 +55,19 @@ fitElasticNetModel <- function(X,y){
   return(model)
 }
 
-#' This function fit random forest model
-#' @param X A matrix of predictor variables
-#' @param y A vector of response variable
-#' @param ntree The number of trees to grow
-#' @return Fitted random forest model
-#' @import randomForest
-#' @export
-fitRandomForestModel <- function(X, y, ntree = 500) {
-  require("randomForest")
-  result <- check_data(X,y)
-  model <- randomForest::randomForest(X,y, ntree = ntree)
-  return(model)
-}
-
-#' This function is to predict outcomes of test data of single fitted model. 
+#' This function is to evaluate performance of model obtained by single regression process. 
 #' @param X A matrix of predictor variables
 #' @param y A vector of response variable
 #' @param p The proportion of train data
-#' @param ntree The number of trees to grow. This parameter is used to predict outcome on random frest model.
+#' @param model Regression model specification ("standard, "ridge", "lasso", "elastic.net") with default of "standard"
 #' @return If y is binary, it returns a list of
 #'        1. confusion.matrix: A confusion matrix between predicted data and test data
 #'        2. accuracy: An accuracy of prediction 
-#'        If y is continuous, it returns
-#'        RMSE: RMSE(Root Mean Square Error) between predicted data and test data. 
-#' @import glmnet
-#' @import randomForest
+#'        If y is continuous, it returns a list of
+#'        1. r_squared: R-squared(Coefficient of determination)  
+#'        2. RMSE: RMSE(Root Mean Square Error) between predicted data and test data.
 #' @export
-modelPrediction <- function(X,y,ntree=500,p=0.8) {
+evaluateModel <- function(X, y, model = "standard", p = 0.8) {
   result <- check_data(X,y)
   y <- result$y
   traintest <- train_test(X,y,p)
@@ -104,47 +75,32 @@ modelPrediction <- function(X,y,ntree=500,p=0.8) {
   train_y <- traintest$train_y
   test_X <- traintest$test_X
   test_y <- traintest$test_y
-  modelselection <- readline(prompt = "Choose model: \n 1 for linear. \n 2 for logistic, \n 3 for ridge, \n 4 for lasso, \n 5 for elastic net, \n 6 for random foreset. \n 7 to stop.")
-  if (modelselection == 1) {
-    if (result$response_type == "binary") 
-      stop("Invalid model type. Response variable should be continuous for linear regression.")
-    model <- fitLinearModel(train_X,train_y)
-    modelCoef <- coef(model)
+  valid_model <- c("standard", "ridge", "lasso", "elastic.net")
+  if (!(model %in% valid_model) || is.na(model)) {
+    stop(paste("Please specify model correctly. Expected one of:", paste(valid_model, collapse = ", ")))
   }
-  if (modelselection == 2) {
-    if(result$response_type == "continuous")
-      stop("Invalid model type. Response variable should be binary for logistic regression.")
-    model <- fitLogisticModel(train_X,train_y)
-    modelCoef <- coef(model)
-  }
-  if (modelselection == 3) {
-    model <- fitRidgeModel(train_X,train_y)
-    modelCoef <- coef(model)
-  }
-  if (modelselection == 4) {
-    model <- fitLassoModel(train_X,train_y)
-    modelCoef <- coef(model)
-  }
-  if (modelselection == 5) {
-    model <- fitElasticNetModel(train_X,train_y)
-    modelCoef <- coef(model)
-  }
-  if (modelselection == 6) {
-    model <- fitRandomForestModel(train_X, train_y)
-    modelCoef <- coef(model)
-  }
-  if (modelselection < 1 || modelselection > 7 || is.na(modelselection)==TRUE)
-    stop("Invalid model selection.")
-  finalPrediction <- cbind(1,test_X) %*% modelCoef
+  model <- switch(model,
+                  "standard" = fitStandard(train_X, train_y),
+                  "ridge" = fitRidge(train_X, train_y),
+                  "lasso" = fitLasso(train_X, train_y),
+                  "elastic.net" = fitElasticNet(train_X, train_y),
+                  stop("Model name is not recognized."))
+  modelCoef <- coef(model)
+  predicted_y <- cbind(1,test_X) %*% modelCoef
   if (result$response_type=="binary") {
-    finalPrediction <- ifelse(finalPrediction>0.5,1,0)
-    confusionMatrix <- table(finalPrediction, test_y)
-    accuracy <- (confusionMatrix[1,1]+confusionMatrix[2,2])/(confusionMatrix[1,1]+confusionMatrix[1,2]+confusionMatrix[2,1]+confusionMatrix[2,2])
-    return(list(confusionMatrix=confusionMatrix,accuracy=accuracy))
+    finalPrediction <- ifelse(predicted_y>0.5,1,0)
+    cm <- table(finalPrediction, test_y)
+    accuracy <- (cm[1,1]+cm[2,2])/(cm[1,1]+cm[1,2]+cm[2,1]+cm[2,2])
+    return(list(confusion.matrix=cm,
+                accuracy=accuracy))
   }
   if (result$response_type=="continuous") {
-    RMSE <- sqrt(mean(test_y-finalPrediction)^2)
-    return(RMSE)
+    sse <- sum((predicted_y - test_y)^2)
+    sst <- sum((test_y - mean(test_y))^2)
+    r_squared <- 1 - (sse/sst)
+    RMSE <- sqrt(mean(test_y - predicted_y)^2)
+    return(list(r_squared=r_squared, 
+                RMSE=RMSE))
   }
 }
 

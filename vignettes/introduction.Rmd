@@ -15,90 +15,291 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(simpleEnsembleGroup19)
+library(autoReg)
 ```
 
-# check_data
-This function check if the response variable is binary or continuous. If response variable is categorical (factor or character with two levels), it changes response variable into binary(0 or 1). This function returns two output, one is feature of response variable(binary or continous) and the other is binary(0 or 1) or continuous response variable
-```{r}
-check_data(bin.x,bin.y)
-check_data(bin.x,bin.y)$response_type
-check_data(bin.x,bin.y)$y
+# 1. Prescreening
+## 1-1.Check data
+The `check_data()` function checks if the response variable is binary or continuous. If the  response variable is categorical (factor or character with two levels), it changes the response variable into binary(0 or 1).
 
-check_data(cont.x,cont.y)
-check_data(cont.x,cont.y)$response_type
-check_data(cont.x,cont.y)$y
+**Example**
+```{r}
+result <- check_data(X = bin.x, y = bin.y)
+result$response_type
+nrow(result$y)
 ```
+**Output**
 
-# train_test(X,y,p) 
-This function generate train and test data for machine learning. In addition to matrix X and vector y, user is required to determine p, which is proportion of train data. If p is not given, it splits train and test data by proportion of 0.8. It returns train_X,train_y,test_X, and test_y.
+- `response_type`: Type of response variable y (`"binary"` or `"continuous"`)
+- `y`: finalized response value of y in vector
+
+
+## 1-2. Split train and test data
+The `train_test()` function generates train and test data for machine learning. In addition to matrix `X` and vector `y`, the user is required to determine `p`, which is the proportion of the training data. If `p` is not given, it splits the train and test data by a proportion of 0.8.
+
+**Example**
 ```{r}
-traintest <- train_test(bin.x,bin.y,p=0.8)
+traintest <- train_test(X = bin.x,y = bin.y, p = 0.8)
 nrow(traintest$train_X)
 nrow(traintest$test_X)
 ```
 
-# prescreeing(X,y,K)
-This function performs pre-screening on predictor variable, evaluating which predictor variable is most informative based on absolute value of correlation to response variable. In addition to matrix X and vector y, users are required to determine K, the number of informative predictors. It returns the names of K most informative predictors. 
+**Output**
+
+- `train_X`: A matrix of predictor variables in train data
+- `train_y`: A vector of response variable in train data
+- `test_X`: A matrix of predictor variables in test data
+- `test_y`: A vector of response variable in test data
+
+
+## 1-3. Determine informative predictors
+The `prescreening()` function performs pre-screening on the predictor variable, evaluating which predictor variable is most informative based on the absolute value of correlation to the response variable. In addition to matrix `X` and vector `y`, users are required to determine `K`, the number of informative predictors. `K` is set to 5 by default. 
+
+**Example**
 ```{r}
-prescreening(bin.x,bin.y,K=5)
+prescreening(X = bin.x, y = bin.y,K = 5)
 ```
 
-#1 Fitting model
-Fitting different types of models is a fundamental task in data analysis and machine learning. This package provides a rich ecosystem of packages for fitting various types of modes. This tutorial covers how to fit the following models using built-in datasets in the package. 
+**Output**  
+
+- Names of the K most informative predictors
+
+
+
+# 2. Fitting model
+Fitting different types of models is a fundamental task in data analysis and machine learning. This package provides a rich ecosystem of packages for fitting various types of modes. This tutorial covers how to fit the following models using built-in datasets in the package.  
+
 1. Linear model
 2. Logistic model
 3. Ridge model
 4. LASSO model
 5. Elastic net model
-6. Random forest model
 
-#1.Linear model
-fitLinearModel() function allows users to fit linear model. It only accepts continuous y vector.
+
+## 2-1.Standard regression model
+`fitStandard()` function allows users to fit standard regression model. It will perform linear regression if the response vector `y` is continuous and logistic regression if `y` is binary. 
+
+**Example: Continous response**
 ```{r}
-linear_model <- fitLinearModel(cont.x,cont.y)
-```
-#2. Logistic model
-fitLogisticModel() function allows users to fit logistic model. It only accepts binary y vector.
-```{r}
-logistic_model <- fitLogisticModel(bin.x,bin.y)
-```
-#3. Ridge model
-fitRidgeModel() function allows users to fit ridge regularization model. It accepts both binary and continuous y vector. 
-```{r}
-ridge_model <- fitRidgeModel(bin.x,bin.y)
-```
-#4. LASSO model
-fitLassoModel() function allows users to fit LASSO regularization model. It accepts both binary and continuous y vector.
-```{r}
-lasso_model <- fitLassoModel(cont.x,cont.y)
-```
-#5. Elastic net model
-fitElasticNetmodel() function allows users to fit elastic net regularization model. It accepts both binary and continuous y vector.
-```{r}
-elasticnet_model <- fitElasticNetModel(bin.x,bin.y)
-```
-#6. Random forest model
-fitRandomForestModel() function allows users to fit random forest model. It accepts both binary and continuous y vector. ntree, refers to the number of tree in random forest model, is set 500 as default. Users can alter the number of tree by specifying a parameter 'ntree'.
-```{r}
-randomforest_model <- fitRandomForestModel(cont.x,cont.y,ntree=500)
+fitStandard(X = cont.x, y = cont.y)
 ```
 
-# Bagging
-Bootstrap bagging is a technique used to imporve the stability and accuracy of machine learning algorithms, especially those prone to high variance. It involves training multiple models on different subsets of the training data and then combining their predictions to make more robust predictions. 
-#1. Fit bagging model
-First, fitting bootstrap bagging model is required. Users must specify R, the number of bootstrap replicates to perform.
-This function generates logistic model regarding selected samples, and collect coefficients of each models. Final model is generated by computing means of coefficients. 
-```{r}
-baggingLogistic(bin.x,bin.y,50)
-```
-#2. Make prediction
-Users can make predictions based on the bootstrap bagging model by using baggingPrediction() function. This function first divide train and test data. The proportion of train and test data is set 0.8 as default. Then users are given selections for which model to perform bagging process. The number of replicates for bootstrap process is set 50 as default. If the given response data is binary, it returns accuracy and the confusion matrix of prediction and test data. If continuous, it returns RMSE(Root Mean Square Error) between prediction and test data. 
+**Output**
 
-```{r}
-baggingPrediction(bin.x,bin.y)
+- An object of a linear regression model
+
+**Example: Binary response**  
+```{r, warning = FALSE}
+fitStandard(X = bin.x, y = bin.y)
 ```
 
+**Output**  
+
+- An object of a logistic regression model
+
+
+## 2-2. Ridge regrssion model
+`fitRidge()` function allows users to fit a ridge regression model.  
+
+**Example**  
 ```{r}
-baggingPrediction(cont.x,cont.y)
+fitRidge(X = bin.x, y = bin.y)
 ```
+
+**Output**  
+
+- An object of a ridge regression model
+
+
+## 2-3. LASSO regression model
+`fitLasso()` function allows users to fit an LASSO regression model. 
+
+**Example**  
+```{r}
+fitLasso(X = cont.x, y = cont.y)
+```
+
+**Output**  
+
+- An object of a LASSO regression model
+
+
+## 2-4. Elastic net model
+`fitElasticNet()` function allows users to fit an elastic net model. 
+
+**Example**  
+```{r}
+fitElasticNet(X = bin.x, y = bin.y)
+```
+
+**Output**  
+
+- An object of an elastic net regression model
+
+
+## 2-5. Evaluation of single regression model
+Users can evaluate the performance of single regression model by `evaluateModel()` function. Users must specify regression model to evaluate among `"standard"`, `"ridge"`, `"lasso"`, and `"elastic.net"` in `model` parameter. If the parameter `model` is not specified, the function will automatically evaluate performance of standard regression model. A parameter `p`, which is the proportion of train and test data, is set to 0.8 by default. 
+
+**Example: Binary Response**
+```{r, warning = FALSE}
+evaluateModel(X = bin.x, y = bin.y, model = "standard", p = 0.8)
+```
+
+**Output**  
+
+- `confusion.matrix`: Confusion matrix comparing final predictions and true test labels
+- `accuracy`: Overall classification accuracy
+
+**Example: Continuous Response**
+```{r}
+evaluateModel(X = cont.x, y = cont.y, model = "standard", p = 0.8)
+```
+
+**Output**
+
+- `r_squared`: R-squared value, which is also known as coefficient of determination
+- `RMSE`: Root Mean Square Error between final predictions and test responses
+
+
+
+# 3. Bagging
+Bootstrap bagging is a technique used to improve the stability and accuracy of machine learning algorithms, especially those prone to high variance. It involves training multiple models on different subsets of the training data and then combining their predictions to make more robust predictions. 
+
+## 3-1. Bagging standard regression model
+The `baggingStandard()` function generates a standard regression model(linear for continuous response and logistic for binary response) regarding selected samples and collects the coefficients of each model. A parameter `R`, the number of replicates for the bootstrap process, is set to 50 by default. The final model is generated by computing the means of the coefficients. 
+
+**Example: Binary Response**
+```{r, warning = FALSE}
+baggingStandard(bin.x, bin.y, R=50)
+```
+
+**Example: Continuous Response**
+```{r}
+baggingStandard(cont.x, cont.y, R=50)
+```
+
+**Output**  
+
+- `coef`: Coefficients of final bagged model by averaging coefficients from each iteration
+- `sd.coef`: Standard deviation of each coefficient in final bagged model. 
+- `pos.rate`: Sign consistency rate of each coefficient
+
+
+## 3-2. Bagging ridge model
+The `baggingRidge()` function generates a ridge model regarding selected samples for selected iterations and collects the coefficients of each model. A parameter `R`, the number of replicates for the bootstrap process, is set to 50 by default. The final model is generated by computing the means of the coefficients. 
+
+**Example**
+```{r}
+baggingRidge(cont.x, cont.y, R = 50)
+```
+
+**Output**  
+
+- `coef`: Coefficients of final bagged model by averaging coefficients from each iteration  
+- `sd.coef`: Standard deviation of each coefficient in final bagged model
+
+
+## 3-3. Bagging LASSO model
+The `baggingLasso()` function generates a LASSO model regarding selected samples for selected iterations and collects the coefficients of each model. A parameter `R`, the number of replicates for the bootstrap process, is set to 50 by default. The final model is generated by computing the means of the coefficients. 
+
+**Example**
+```{r}
+baggingLasso(cont.x, cont.y, R = 50)
+```
+
+**Output**  
+
+- `coef`: Coefficients of final bagged model by averaging coefficients from each iteration  
+- `selection.rate`: Selection frequency of each predictors
+
+
+## 3-4. Bagging elastic net model
+The `baggingElasticNet()` function generates an elastic net model regarding selected samples for specified iterations and collects the coefficients of each model. A parameter `R`, the number of replicates for the bootstrap process, is set to 50 by default. The final model is generated by computing the means of the coefficients. 
+
+**Example**
+```{r}
+baggingElasticNet(cont.x, cont.y, R = 50)
+```
+
+**Ouput**
+
+- `coef`: Coefficients of final bagged model by averaging coefficients from each iteration    
+- `sd.coef`: Standard deviation of each coefficient in final bagged model  
+- `selection.rate`: Selection frequency of each predictors
+
+
+## 3-5. Evaluation of bootstrap bagging process 
+Users can evaluate performance based on the bootstrap bagging model by `evaluateBagging()` function. Users must specify `model` parameter to decide regression model for bootstrap bagging among following list: `"standard"`, `"ridge"`, `"lasso"`, and `"elastic.net"`. If not specified, the function automatically performs and evaluates bootstrap bagging in standard regression model. This function divides train and test data. A parameter `p`, which is the proportion of train and test data, is set to 0.8 by default. Then, users are given selections for which model to perform the bagging process. A parameter `R`, the number of replicates for the bootstrap process, is set to 50 by default. 
+
+**Example: Binary Response**
+```{r, warning = FALSE}
+evaluateBagging(bin.x, bin.y, model = "standard", R = 50, p = 0.8)
+```
+
+**Output**  
+
+- `confusion.matrix`: Confusion matrix comparing final predictions and true test labels
+- `accuracy`: Overall classification accuracy
+
+**Example: Continuous Response**
+```{r}
+evaluateBagging(cont.x, cont.y, model = "standard", R = 50, p = 0.8)
+```
+
+**Output:**
+
+- `r_squared`: R-squared value, also known as coefficient of determination
+- `RMSE`: Root Mean Square Error between final predictions and test responses
+
+
+
+
+# 4. Ensemble Learning
+Ensemble learning is a powerful statistical approach that combines the predictions of multiple individual models to improve overall accuracy and robustness compared to any single model used in isolation. The `ensemblelearning()` function implements this concept by allowing users to interactively select and train a variety of regression and classification models, including general regression (linear, logistic) and regularized regression techniques. After the user finishes selecting their desired suite of models, the function aggregates their outputs through an averaging process to generate final predictions for the test dataset. Depending on whether the response variable is binary or continuous, the function concludes by providing comprehensive performance metrics such as accuracy and confusion matrices or R-squared and RMSE.
+
+**Example: Binary Response**  
+```{r, eval = FALSE}
+ensembleLearning(bin.x, bin.y, p = 0.8)
+```
+
+During execution, users will be prompted to select models interactively:  
+```text
+Choose a model.
+  1 for standard regression,
+  2 for ridge,
+  3 for LASSO,
+  4 for elastic net,
+  5 to exit.
+```
+Users can enter an integer between 1 and 4 to select regression model. This function will repeat unless users enter 5 to terminate the ensemble learning. 
+
+**Output**  
+
+- `model_summary`: Table for count of regression model used in ensemble learning process
+- `confusion.matrix`: Confusion matrix comparing final predictions and true test labels
+- `accuracy`: Overall classification accuracy
+
+**Example: Continuous Response**
+```{r, eval=FALSE}
+ensembleLearning(cont.x, cont.y, p = 0.8)
+```
+
+During execution, users will be prompted to select models interactively:
+```text
+Choose a model.
+  1 for standard regression,
+  2 for ridge,
+  3 for LASSO,
+  4 for elastic net,
+  5 to exit.
+```
+Users can enter an integer between 1 and 4 to select regression model. This function will repeat unless users enter 5 to terminate the ensemble learning. 
+
+**Output:**
+
+- `model_summary`: Table for count of regression model used in ensemble learning process 
+- `RMSE`: Root Mean Square Error (RMSE) between final predictions and test responses
+- `r-squared`: R-squared, also known as coefficient of determination
+
+
+

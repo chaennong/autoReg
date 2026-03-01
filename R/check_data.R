@@ -7,6 +7,9 @@
 #'          y: finalized response value of y 
 #' @export
 check_data <- function(X, y) {
+  # Check if X and y have equal number of observations
+  if(nrow(X) != length(y))
+    stop("The number of row in X and the length of y must be same.")
   # Convert y to binary if it is categorical (factor with two levels)
   if (is.factor(y) && length(levels(y)) == 2) {
     y <- as.numeric(y) - 1
@@ -60,29 +63,14 @@ prescreening <- function(X,y,K=1) {
     stop("K cannot be 0")
   if(K<0 || is.na(K))
     stop("Invalid input of K.")
-  if(ncol(X)<length(y)) {
-    option <- readline(prompt = "The number of predictor is less than the number of observation. Do you want to continue? 1 for yes, 2 for no. ")
-   if(option==1) {
-     p <- ncol(X)
-   cor <- rep(NA,times=p)
-   names(cor) <- colnames(X)
-   for(i in 1:p) {
-     cor[i] <- abs(cor(X[,i],y))
-   }
-   sort_cor <- sort(cor,decreasing=TRUE)
-   most_informative <- sort_cor[1:K]
-   }
-    if(option==2)
-      stop("Function has been stopped")
-    p <- ncol(X)
-    cor <- rep(NA,times=p)
-    names(cor) <- colnames(X)
-    for(i in 1:p) {
-      cor[i] <- abs(cor(X[,i],y))
+  p <- ncol(X)
+  cor <- rep(NA,times=p)
+  names(cor) <- colnames(X)
+  for(i in 1:p) {
+    cor[i] <- abs(cor(X[,i],y))
     }
-    sort_cor <- sort(cor,decreasing=TRUE)
-    most_informative <- sort_cor[1:K]
-    return(names(most_informative))
+  sort_cor <- sort(cor,decreasing=TRUE)
+  most_informative <- sort_cor[1:K]
+  return(names(most_informative))
   }
  
-}
